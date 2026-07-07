@@ -3,10 +3,17 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
-from .engine import engine
+from .engine import get_engine
 
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+
+def get_sessionmaker(
+    database_url: str | None = None,
+) -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(
+        bind=get_engine(database_url),
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+
+AsyncSessionLocal = get_sessionmaker()

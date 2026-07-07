@@ -24,3 +24,5 @@ DEFAULT_PORT = 8080
 DEFAULT_LOG_LEVEL = "INFO"
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
+
+DEFAULT_DATABASE_URL = "sqlite+aiosqlite:///sentinel.db"

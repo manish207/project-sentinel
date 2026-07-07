@@ -6,6 +6,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from project_sentinel.config.defaults import (
+    DEFAULT_DATABASE_URL,
     DEFAULT_HOST,
     DEFAULT_LOG_LEVEL,
     DEFAULT_OLLAMA_URL,
@@ -29,6 +30,8 @@ class Settings(BaseSettings):
     log_level: str = DEFAULT_LOG_LEVEL
 
     ollama_url: str = DEFAULT_OLLAMA_URL
+
+    database_url: str = DEFAULT_DATABASE_URL
 
     github_token: str | None = Field(default=None)
 
