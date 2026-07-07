@@ -1,4 +1,10 @@
-from .models import Task
-from .repository import TaskRepository
+from .models import InvalidTaskTransitionError, Task
+from .repository import TaskFilters, TaskRepository, TaskSort
 
-__all__ = ["Task", "TaskRepository"]
+__all__ = [
+    "InvalidTaskTransitionError",
+    "Task",
+    "TaskFilters",
+    "TaskRepository",
+    "TaskSort",
+]

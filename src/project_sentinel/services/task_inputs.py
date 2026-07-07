@@ -1,0 +1,35 @@
+from dataclasses import dataclass
+from datetime import date
+from uuid import UUID
+
+from project_sentinel.domain.common import Priority, Status
+
+
+@dataclass(frozen=True)
+class TaskCreate:
+    title: str
+    description: str = ""
+    priority: Priority = Priority.MEDIUM
+    tags: list[str] | None = None
+    due_date: date | None = None
+    scheduled_date: date | None = None
+    estimated_minutes: int | None = None
+    parent_task_id: UUID | None = None
+    project_id: UUID | None = None
+    workspace_id: UUID | None = None
+
+
+@dataclass(frozen=True)
+class TaskUpdate:
+    title: str | None = None
+    description: str | None = None
+    priority: Priority | None = None
+    status: Status | None = None
+    tags: list[str] | None = None
+    due_date: date | None = None
+    scheduled_date: date | None = None
+    estimated_minutes: int | None = None
+    actual_minutes: int | None = None
+    parent_task_id: UUID | None = None
+    project_id: UUID | None = None
+    workspace_id: UUID | None = None

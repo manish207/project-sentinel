@@ -49,3 +49,55 @@ def test_task_cli_create_list_complete_and_delete(tmp_path: Path):
     empty_list_result = runner.invoke(app, ["task", "list"], env=env)
     assert empty_list_result.exit_code == 0
     assert "No tasks found." in empty_list_result.output
+
+
+def test_task_cli_update_filter_sort_and_search(tmp_path: Path):
+    env = {"SENTINEL_DATABASE_URL": _database_url(tmp_path / "sentinel.db")}
+
+    create_result = runner.invoke(
+        app,
+        [
+            "task",
+            "create",
+            "Buy milk",
+            "--description",
+            "From the market",
+            "--priority",
+            "high",
+            "--tag",
+            "errand",
+            "--due-date",
+            "2026-07-07",
+        ],
+        env=env,
+    )
+    assert create_result.exit_code == 0
+    task_id = _task_id(create_result.output)
+
+    update_result = runner.invoke(
+        app,
+        [
+            "task",
+            "update",
+            task_id,
+            "--status",
+            "planned",
+            "--actual-minutes",
+            "5",
+        ],
+        env=env,
+    )
+    assert update_result.exit_code == 0
+
+    filtered_result = runner.invoke(
+        app,
+        ["task", "list", "--priority", "high", "--sort", "due_date"],
+        env=env,
+    )
+    assert filtered_result.exit_code == 0
+    assert task_id in filtered_result.output
+    assert "2026-07-07" in filtered_result.output
+
+    search_result = runner.invoke(app, ["task", "search", "market"], env=env)
+    assert search_result.exit_code == 0
+    assert "Buy milk" in search_result.output

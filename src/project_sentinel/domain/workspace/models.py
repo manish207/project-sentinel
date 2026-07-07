@@ -13,3 +13,4 @@ class Workspace(Entity):
     name: str = Field(min_length=1, max_length=100)
     description: str = Field(default="", max_length=500)
     active: bool = True
+    is_default: bool = False

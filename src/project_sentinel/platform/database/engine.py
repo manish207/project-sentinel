@@ -10,10 +10,14 @@ def get_database_url() -> str:
     return environ.get("SENTINEL_DATABASE_URL", DEFAULT_DATABASE_URL)
 
 
-@lru_cache(maxsize=None)
 def get_engine(database_url: str | None = None) -> AsyncEngine:
+    return _cached_engine(database_url or get_database_url())
+
+
+@lru_cache(maxsize=None)
+def _cached_engine(database_url: str) -> AsyncEngine:
     return create_async_engine(
-        database_url or get_database_url(),
+        database_url,
         echo=False,
         future=True,
     )
