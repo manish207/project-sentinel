@@ -42,6 +42,19 @@ class FakeTaskRepository:
     async def get(self, task_id: UUID) -> Task | None:
         return self.tasks.get(task_id)
 
+    async def children(
+        self,
+        parent_task_id: UUID,
+    ) -> builtins.list[Task]:
+        return [
+            task
+            for task in self.tasks.values()
+            if task.parent_task_id == parent_task_id
+        ]
+
+    async def root_tasks(self) -> builtins.list[Task]:
+        return [task for task in self.tasks.values() if task.parent_task_id is None]
+
     async def save(self, task: Task) -> Task:
         self.tasks[task.id] = task
         return task
@@ -58,7 +71,7 @@ def test_task_service_creates_and_completes_task():
         completed = await service.complete_task(task.id)
 
         assert completed.id == task.id
-        assert completed.status == "completed"
+        assert completed.status == Status.COMPLETED
 
     asyncio.run(run())
 
@@ -88,10 +101,15 @@ def test_task_service_updates_and_searches_task():
                 tags=["Errand"],
             ),
         )
+
         updated = await service.update_task(
             task.id,
-            TaskUpdate(status=Status.PLANNED, actual_minutes=5),
+            TaskUpdate(
+                status=Status.PLANNED,
+                actual_minutes=5,
+            ),
         )
+
         results = await service.search_tasks("corner")
 
         assert updated.status == Status.PLANNED

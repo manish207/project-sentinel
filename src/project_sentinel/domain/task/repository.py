@@ -46,6 +46,15 @@ class TaskRepository(Protocol):
     async def get(self, task_id: UUID) -> Task | None:
         """Return one task by ID."""
 
+    async def children(
+        self,
+        parent_task_id: UUID,
+    ) -> builtins.list[Task]:
+        """Return the immediate child tasks."""
+
+    async def root_tasks(self) -> builtins.list[Task]:
+        """Return all tasks that do not have a parent."""
+
     async def save(self, task: Task) -> Task:
         """Persist changes to a task."""
 

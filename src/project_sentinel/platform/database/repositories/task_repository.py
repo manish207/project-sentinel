@@ -4,6 +4,7 @@ import builtins
 import json
 from datetime import UTC, date, datetime
 from uuid import UUID
+from collections.abc import Iterable
 
 from sqlalchemy import Select, and_, case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,6 +54,62 @@ class SqlAlchemyTaskRepository:
             return None
         return self._to_domain(record)
 
+    async def children(
+        self,
+        parent_task_id: UUID,
+    ) -> builtins.list[Task]:
+        result = await self._session.execute(
+            select(TaskRecord)
+            .where(TaskRecord.parent_task_id == str(parent_task_id))
+            .order_by(TaskRecord.created_at, TaskRecord.title)
+        )
+
+        return [self._to_domain(record) for record in result.scalars()]
+
+    async def root_tasks(self) -> builtins.list[Task]:
+        result = await self._session.execute(
+            select(TaskRecord)
+            .where(TaskRecord.parent_task_id.is_(None))
+            .order_by(TaskRecord.created_at, TaskRecord.title)
+        )
+
+        return [self._to_domain(record) for record in result.scalars()]
+
+    async def get_many(
+        self,
+        task_ids: Iterable[UUID],
+    ) -> builtins.list[Task]:
+        ids = {str(task_id) for task_id in task_ids}
+
+        if not ids:
+            return []
+
+        result = await self._session.execute(
+            select(TaskRecord).where(TaskRecord.id.in_(ids))
+        )
+
+        return [self._to_domain(record) for record in result.scalars()]
+
+    async def save_many(
+        self,
+        tasks: Iterable[Task],
+    ) -> builtins.list[Task]:
+        persisted: builtins.list[Task] = []
+
+        for task in tasks:
+            record = await self._session.get(TaskRecord, str(task.id))
+
+            if record is None:
+                self._session.add(self._to_record(task))
+            else:
+                self._update_record(record, task)
+
+            persisted.append(task)
+
+        await self._session.commit()
+
+        return persisted
+
     async def save(self, task: Task) -> Task:
         record = await self._session.get(TaskRecord, str(task.id))
         if record is None:
@@ -64,11 +121,33 @@ class SqlAlchemyTaskRepository:
 
     async def delete(self, task_id: UUID) -> bool:
         record = await self._session.get(TaskRecord, str(task_id))
+
         if record is None:
             return False
+
         await self._session.delete(record)
         await self._session.commit()
+
         return True
+
+    async def delete_many(
+        self,
+        task_ids: Iterable[UUID],
+    ) -> int:
+        deleted = 0
+
+        for task_id in set(task_ids):
+            record = await self._session.get(TaskRecord, str(task_id))
+
+            if record is None:
+                continue
+
+            await self._session.delete(record)
+            deleted += 1
+
+        await self._session.commit()
+
+        return deleted
 
     def _to_record(self, task: Task) -> TaskRecord:
         return TaskRecord(
