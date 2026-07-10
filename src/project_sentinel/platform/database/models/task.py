@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import Date, DateTime, Integer, String, Text
+from sqlalchemy import Date, DateTime, Integer, String, Text, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 
 from project_sentinel.platform.database.base import Base
@@ -19,6 +19,9 @@ class TaskRecord(Base):
     tags: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     scheduled_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    recurring = mapped_column(Boolean, default=False)
+    repeat_every = mapped_column(Integer, nullable=True)
+    repeat_unit = mapped_column(String(20), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

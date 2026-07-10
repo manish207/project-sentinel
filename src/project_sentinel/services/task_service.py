@@ -42,6 +42,9 @@ class TaskService:
             tags=data.tags or [],
             due_date=data.due_date,
             scheduled_date=data.scheduled_date,
+            recurring=data.recurring,
+            repeat_every=data.repeat_every,
+            repeat_unit=data.repeat_unit,
             estimated_minutes=data.estimated_minutes,
             parent_task_id=data.parent_task_id,
             project_id=data.project_id,
@@ -89,6 +92,12 @@ class TaskService:
             task.due_date = update.due_date
         if update.scheduled_date is not None:
             task.scheduled_date = update.scheduled_date
+        if update.recurring is not None:
+            task.recurring = update.recurring
+        if update.repeat_every is not None:
+            task.repeat_every = update.repeat_every
+        if update.repeat_unit is not None:
+            task.repeat_unit = update.repeat_unit
         if update.estimated_minutes is not None:
             task.estimated_minutes = update.estimated_minutes
         if update.actual_minutes is not None:

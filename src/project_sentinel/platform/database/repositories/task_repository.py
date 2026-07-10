@@ -160,6 +160,9 @@ class SqlAlchemyTaskRepository:
             tags=json.dumps(task.tags),
             due_date=task.due_date,
             scheduled_date=task.scheduled_date,
+            recurring=task.recurring,
+            repeat_every=task.repeat_every,
+            repeat_unit=task.repeat_unit,
             completed_at=task.completed_at,
             estimated_minutes=task.estimated_minutes,
             actual_minutes=task.actual_minutes,
@@ -179,6 +182,9 @@ class SqlAlchemyTaskRepository:
         record.tags = json.dumps(task.tags)
         record.due_date = task.due_date
         record.scheduled_date = task.scheduled_date
+        record.recurring = task.recurring
+        record.repeat_every = task.repeat_every
+        record.repeat_unit = task.repeat_unit
         record.completed_at = task.completed_at
         record.estimated_minutes = task.estimated_minutes
         record.actual_minutes = task.actual_minutes
@@ -201,6 +207,9 @@ class SqlAlchemyTaskRepository:
             tags=json.loads(record.tags or "[]"),
             due_date=_coerce_date(record.due_date),
             scheduled_date=_coerce_date(record.scheduled_date),
+            recurring=record.recurring,
+            repeat_every=record.repeat_every,
+            repeat_unit=record.repeat_unit,
             completed_at=_coerce_optional_datetime(record.completed_at),
             estimated_minutes=record.estimated_minutes,
             actual_minutes=record.actual_minutes,

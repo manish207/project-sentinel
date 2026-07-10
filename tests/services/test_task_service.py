@@ -190,3 +190,25 @@ def test_task_tree():
         assert tree[0].children[0].children[0].task.title == "Grand Child"
 
     asyncio.run(run())
+
+
+def test_recurring_task():
+    async def run():
+        repo = FakeTaskRepository()
+        service = TaskService(repo)
+
+        task = await service.create_task(
+            "Backup",
+            TaskCreate(
+                title="Backup",
+                recurring=True,
+                repeat_every=1,
+                repeat_unit="day",
+            ),
+        )
+
+        assert task.recurring is True
+        assert task.repeat_every == 1
+        assert task.repeat_unit == "day"
+
+    asyncio.run(run())

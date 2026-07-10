@@ -3,6 +3,7 @@ from collections.abc import Awaitable, Callable
 from datetime import date
 from typing import TypeVar
 from uuid import UUID
+from typing import Literal, cast
 
 import typer
 from rich.console import Console
@@ -47,6 +48,9 @@ def create(
     tag: list[str] | None = typer.Option(None, "--tag", "-t"),
     due_date: str | None = typer.Option(None, "--due-date"),
     scheduled_date: str | None = typer.Option(None, "--scheduled-date"),
+    recurring: bool = typer.Option(False, "--recurring"),
+    repeat_every: int | None = typer.Option(None, "--repeat-every"),
+    repeat_unit: str | None = typer.Option(None, "--repeat-unit"),
     estimated_minutes: int | None = typer.Option(None, "--estimated-minutes"),
     parent_task_id: UUID | None = typer.Option(None, "--parent-task-id"),
     project_id: UUID | None = typer.Option(None, "--project"),
@@ -64,6 +68,9 @@ def create(
                 tags=tag,
                 due_date=_parse_date(due_date),
                 scheduled_date=_parse_date(scheduled_date),
+                recurring=recurring,
+                repeat_every=repeat_every,
+                repeat_unit=_parse_repeat_unit(repeat_unit),
                 estimated_minutes=estimated_minutes,
                 parent_task_id=parent_task_id,
                 project_id=project_id,
@@ -186,6 +193,9 @@ def update(
     tag: list[str] | None = typer.Option(None, "--tag", "-t"),
     due_date: str | None = typer.Option(None, "--due-date"),
     scheduled_date: str | None = typer.Option(None, "--scheduled-date"),
+    recurring: bool = typer.Option(False, "--recurring"),
+    repeat_every: int | None = typer.Option(None, "--repeat-every"),
+    repeat_unit: str | None = typer.Option(None, "--repeat-unit"),
     estimated_minutes: int | None = typer.Option(None, "--estimated-minutes"),
     actual_minutes: int | None = typer.Option(None, "--actual-minutes"),
     parent_task_id: UUID | None = typer.Option(None, "--parent-task-id"),
@@ -205,6 +215,9 @@ def update(
                 tags=tag,
                 due_date=_parse_date(due_date),
                 scheduled_date=_parse_date(scheduled_date),
+                recurring=recurring,
+                repeat_every=repeat_every,
+                repeat_unit=_parse_repeat_unit(repeat_unit),
                 estimated_minutes=estimated_minutes,
                 actual_minutes=actual_minutes,
                 parent_task_id=parent_task_id,
@@ -314,6 +327,25 @@ def _run_task_action(action: Callable[[TaskService], Awaitable[T]]) -> T:
     except ValueError as error:
         console.print(f"[red]{error}[/red]")
         raise typer.Exit(code=1) from error
+
+
+def _parse_repeat_unit(
+    value: str | None,
+) -> Literal["day", "week", "month", "year"] | None:
+    if value is None:
+        return None
+
+    value = value.lower()
+
+    allowed = {"day", "week", "month", "year"}
+
+    if value not in allowed:
+        raise ValueError("repeat-unit must be one of: day, week, month, year")
+
+    return cast(
+        Literal["day", "week", "month", "year"],
+        value,
+    )
 
 
 def _parse_date(value: str | None) -> date | None:

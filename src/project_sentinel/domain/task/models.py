@@ -1,5 +1,6 @@
 from datetime import UTC, date, datetime
 from uuid import UUID
+from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
@@ -79,6 +80,9 @@ class Task(Entity):
     tags: list[str] = Field(default_factory=list)
     due_date: date | None = None
     scheduled_date: date | None = None
+    recurring: bool = False
+    repeat_every: int | None = None
+    repeat_unit: Literal["day", "week", "month", "year"] | None = None
     completed_at: datetime | None = None
     estimated_minutes: int | None = Field(default=None, ge=0)
     actual_minutes: int | None = Field(default=None, ge=0)
