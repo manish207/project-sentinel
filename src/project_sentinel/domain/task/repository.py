@@ -6,6 +6,7 @@ from datetime import date
 from enum import StrEnum
 from typing import Protocol
 from uuid import UUID
+from collections.abc import Iterable
 
 from project_sentinel.domain.common import Priority, Status
 from project_sentinel.domain.task.models import Task
@@ -60,3 +61,21 @@ class TaskRepository(Protocol):
 
     async def delete(self, task_id: UUID) -> bool:
         """Delete one task by ID."""
+
+    async def get_many(
+        self,
+        task_ids: Iterable[UUID],
+    ) -> builtins.list[Task]:
+        """Return multiple tasks."""
+
+    async def save_many(
+        self,
+        tasks: Iterable[Task],
+    ) -> builtins.list[Task]:
+        """Persist multiple tasks."""
+
+    async def delete_many(
+        self,
+        task_ids: Iterable[UUID],
+    ) -> int:
+        """Delete multiple tasks and return number deleted."""
