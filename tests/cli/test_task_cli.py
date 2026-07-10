@@ -101,3 +101,39 @@ def test_task_cli_update_filter_sort_and_search(tmp_path: Path):
     search_result = runner.invoke(app, ["task", "search", "market"], env=env)
     assert search_result.exit_code == 0
     assert "Buy milk" in search_result.output
+
+
+def test_tree_command(tmp_path: Path):
+    env = {"SENTINEL_DATABASE_URL": _database_url(tmp_path / "sentinel.db")}
+
+    create_result = runner.invoke(
+        app,
+        ["task", "create", "Parent"],
+        env=env,
+    )
+    assert create_result.exit_code == 0
+
+    parent_id = _task_id(create_result.output)
+
+    create_child = runner.invoke(
+        app,
+        [
+            "task",
+            "create",
+            "Child",
+            "--parent-task-id",
+            parent_id,
+        ],
+        env=env,
+    )
+    assert create_child.exit_code == 0
+
+    tree_result = runner.invoke(
+        app,
+        ["task", "tree"],
+        env=env,
+    )
+
+    assert tree_result.exit_code == 0
+    assert "Parent" in tree_result.output
+    assert "Child" in tree_result.output

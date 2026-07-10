@@ -27,6 +27,7 @@ htmlcov/
 
 # SQLite
 *.db
+*.sqlite
 *.sqlite3
 
 # Alembic local config

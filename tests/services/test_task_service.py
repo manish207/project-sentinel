@@ -124,3 +124,38 @@ def test_parse_priority_rejects_invalid_value():
 
     with pytest.raises(InvalidTaskValueError):
         parse_priority("urgent")
+
+
+def test_task_tree():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        parent = await service.create_task("Parent")
+
+        child1 = await service.create_task(
+            "Child 1",
+            TaskCreate(
+                title="Child 1",
+                parent_task_id=parent.id,
+            ),
+        )
+
+        await service.create_task(
+            "Grand Child",
+            TaskCreate(
+                title="Grand Child",
+                parent_task_id=child1.id,
+            ),
+        )
+
+        tree = await service.task_tree()
+
+        assert len(tree) == 1
+        assert tree[0].task.title == "Parent"
+        assert len(tree[0].children) == 1
+        assert tree[0].children[0].task.title == "Child 1"
+        assert len(tree[0].children[0].children) == 1
+        assert tree[0].children[0].children[0].task.title == "Grand Child"
+
+    asyncio.run(run())

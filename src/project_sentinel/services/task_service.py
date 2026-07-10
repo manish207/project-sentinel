@@ -1,5 +1,6 @@
 from datetime import UTC, date, datetime
 from uuid import UUID
+from dataclasses import dataclass, field
 
 from project_sentinel.domain.common import DomainError
 from project_sentinel.domain.common import Priority, Status
@@ -14,6 +15,12 @@ class TaskNotFoundError(DomainError):
 
 class InvalidTaskValueError(DomainError):
     """Raised when task input is invalid."""
+
+
+@dataclass(slots=True)
+class TaskNode:
+    task: Task
+    children: list["TaskNode"] = field(default_factory=list)
 
 
 class TaskService:
@@ -49,8 +56,23 @@ class TaskService:
     ) -> list[Task]:
         return await self._repository.list(filters, sort)
 
+    async def task_tree(self) -> list[TaskNode]:
+        roots = await self._repository.root_tasks()
+        return [await self._build_tree(task) for task in roots]
+
+    async def _build_tree(self, task: Task) -> TaskNode:
+        children = await self._repository.children(task.id)
+
+        return TaskNode(
+            task=task,
+            children=[await self._build_tree(child) for child in children],
+        )
+
     async def search_tasks(self, text: str) -> list[Task]:
         return await self._repository.search(text)
+
+    async def children(self, parent_id: UUID) -> list[Task]:
+        return await self._repository.children(parent_id)
 
     async def update_task(self, task_id: UUID, update: TaskUpdate) -> Task:
         task = await self._get_required(task_id)
@@ -116,6 +138,30 @@ class TaskService:
                 Workspace(name="Default", is_default=True)
             )
         return workspace.id
+
+    async def create_subtask(
+        self,
+        parent_task_id: UUID,
+        title: str,
+    ) -> Task:
+        parent = await self._get_required(parent_task_id)
+
+        subtask = Task(
+            title=title,
+            parent_task_id=parent.id,
+            workspace_id=parent.workspace_id,
+            project_id=parent.project_id,
+            priority=parent.priority,
+        )
+
+        return await self._repository.add(subtask)
+
+    async def list_subtasks(
+        self,
+        parent_task_id: UUID,
+    ) -> list[Task]:
+        await self._get_required(parent_task_id)
+        return await self._repository.children(parent_task_id)
 
 
 def parse_priority(value: str) -> Priority:

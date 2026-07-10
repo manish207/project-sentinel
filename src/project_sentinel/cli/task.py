@@ -8,9 +8,10 @@ import typer
 from rich.console import Console
 from rich.table import Table
 from sqlalchemy.ext.asyncio import AsyncSession
+from rich.tree import Tree
 
 from project_sentinel.cli.runtime import with_session
-from project_sentinel.domain.common import DomainError
+from project_sentinel.domain.common import DomainError, Status
 from project_sentinel.domain.task import Task, TaskFilters, TaskSort
 from project_sentinel.platform.database.repositories import (
     SqlAlchemyTaskRepository,
@@ -21,6 +22,7 @@ from project_sentinel.services import (
     TaskNotFoundError,
     TaskService,
     TaskUpdate,
+    TaskNode,
     parse_priority,
     parse_status,
     today,
@@ -73,6 +75,31 @@ def create(
     console.print(f"Created task {task.id}: {task.title}")
 
 
+@task_app.command(name="add-subtask")
+def add_subtask(
+    parent_id: UUID = typer.Argument(..., help="Parent task ID"),
+    title: str = typer.Argument(..., help="Subtask title"),
+    description: str = typer.Option("", "--description", "-d"),
+    priority: str = typer.Option("medium", "--priority", "-p"),
+) -> None:
+    """Create a subtask."""
+
+    async def action(service: TaskService) -> Task:
+        return await service.create_task(
+            title,
+            TaskCreate(
+                title=title,
+                description=description,
+                priority=parse_priority(priority),
+                parent_task_id=parent_id,
+            ),
+        )
+
+    task = _run_task_action(action)
+
+    console.print(f"Created subtask {task.id} under {parent_id}")
+
+
 @task_app.command(name="list")
 def list_tasks(
     status: str | None = typer.Option(None, "--status"),
@@ -110,6 +137,40 @@ def search(text: str = typer.Argument(..., help="Search text")) -> None:
 
     async def action(service: TaskService) -> list[Task]:
         return await service.search_tasks(text)
+
+    tasks = _run_task_action(action)
+    _print_tasks(tasks)
+
+
+@task_app.command()
+def tree() -> None:
+    """Display tasks as a hierarchy."""
+
+    async def action(service: TaskService) -> list[TaskNode]:
+        return await service.task_tree()
+
+    roots = _run_task_action(action)
+
+    if not roots:
+        console.print("No tasks found.")
+        return
+
+    tree = Tree("📂 Tasks")
+
+    for node in roots:
+        _build_tree(tree, node)
+
+    console.print(tree)
+
+
+@task_app.command()
+def children(
+    task_id: UUID = typer.Argument(..., help="Parent task ID"),
+) -> None:
+    """List direct subtasks."""
+
+    async def action(service: TaskService) -> list[Task]:
+        return await service.children(task_id)
 
     tasks = _run_task_action(action)
     _print_tasks(tasks)
@@ -154,6 +215,36 @@ def update(
 
     task = _run_task_action(action)
     console.print(f"Updated task {task.id}: {task.title}")
+
+
+def _build_tree(branch: Tree, node: TaskNode) -> None:
+    icons = {
+        Status.INBOX: "📥",
+        Status.PLANNED: "📌",
+        Status.READY: "🟢",
+        Status.IN_PROGRESS: "🚧",
+        Status.WAITING: "⏳",
+        Status.BLOCKED: "🚫",
+        Status.COMPLETED: "✅",
+        Status.CANCELLED: "❌",
+        Status.ARCHIVED: "📦",
+    }
+
+    icon = icons.get(node.task.status, "📄")
+
+    due = (
+        f" [dim]({node.task.due_date.isoformat()})[/dim]" if node.task.due_date else ""
+    )
+
+    child = branch.add(
+        f"{icon} "
+        f"[bold]{node.task.title}[/bold] "
+        f"[cyan]{node.task.priority.value}[/cyan]"
+        f"{due}"
+    )
+
+    for child_node in node.children:
+        _build_tree(child, child_node)
 
 
 def _print_tasks(tasks: list[Task]) -> None:
