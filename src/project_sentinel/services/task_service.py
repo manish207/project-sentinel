@@ -1,6 +1,7 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 from dataclasses import dataclass, field
+from calendar import monthrange
 
 from project_sentinel.domain.common import DomainError
 from project_sentinel.domain.common import Priority, Status
@@ -124,8 +125,51 @@ class TaskService:
 
     async def complete_task(self, task_id: UUID) -> Task:
         task = await self._get_required(task_id)
+
         task.complete()
-        return await self._repository.save(task)
+        await self._repository.save(task)
+
+        # print("1:", task.recurring, task.repeat_every, task.repeat_unit, task.due_date)
+
+        if (
+            task.recurring
+            and task.repeat_every is not None
+            and task.repeat_unit is not None
+            and task.due_date is not None
+        ):
+            # print("2: inside recurring block")
+
+            next_due = _advance_date(
+                task.due_date,
+                task.repeat_unit,
+                task.repeat_every,
+            )
+
+            # print("3: next due =", next_due)
+
+            next_task = Task(
+                title=task.title,
+                description=task.description,
+                priority=task.priority,
+                tags=list(task.tags),
+                due_date=next_due,
+                scheduled_date=task.scheduled_date,
+                recurring=True,
+                repeat_every=task.repeat_every,
+                repeat_unit=task.repeat_unit,
+                estimated_minutes=task.estimated_minutes,
+                parent_task_id=task.parent_task_id,
+                project_id=task.project_id,
+                workspace_id=task.workspace_id,
+            )
+
+            # print("4: adding", next_task.id)
+
+            await self._repository.add(next_task)
+
+            # print("5: added")
+
+        return task
 
     async def delete_task(self, task_id: UUID) -> None:
         deleted = await self._repository.delete(task_id)
@@ -189,3 +233,38 @@ def parse_status(value: str) -> Status:
 
 def today() -> date:
     return datetime.now(UTC).date()
+
+
+def _advance_date(
+    due_date: date,
+    repeat_unit: str,
+    interval: int,
+) -> date:
+    if repeat_unit == "day":
+        return due_date + timedelta(days=interval)
+
+    if repeat_unit == "week":
+        return due_date + timedelta(weeks=interval)
+
+    if repeat_unit == "month":
+        month = due_date.month - 1 + interval
+        year = due_date.year + month // 12
+        month = month % 12 + 1
+
+        day = min(
+            due_date.day,
+            monthrange(year, month)[1],
+        )
+
+        return date(year, month, day)
+
+    year = due_date.year + interval
+
+    try:
+        return due_date.replace(year=year)
+    except ValueError:
+        return due_date.replace(
+            year=year,
+            month=2,
+            day=28,
+        )

@@ -39,7 +39,7 @@ class TaskUpdate:
     tags: list[str] | None = None
     due_date: date | None = None
     scheduled_date: date | None = None
-    recurring: bool = False
+    recurring: bool | None = None
     repeat_every: int | None = None
     repeat_unit: (
         Literal[

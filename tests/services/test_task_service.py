@@ -1,6 +1,7 @@
 import asyncio
 import builtins
 from uuid import UUID
+from datetime import date
 
 import pytest
 from collections.abc import Iterable
@@ -210,5 +211,40 @@ def test_recurring_task():
         assert task.recurring is True
         assert task.repeat_every == 1
         assert task.repeat_unit == "day"
+
+    asyncio.run(run())
+
+
+def test_complete_recurring_task_creates_next_occurrence():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        task = await service.create_task(
+            "Pay Electricity Bill",
+            TaskCreate(
+                title="Pay Electricity Bill",
+                due_date=date(2026, 7, 10),
+                recurring=True,
+                repeat_every=1,
+                repeat_unit="month",
+            ),
+        )
+        # print("recurring =", task.recurring)
+        # print("repeat_every =", task.repeat_every)
+        # print("repeat_unit =", task.repeat_unit)
+
+        await service.complete_task(task.id)
+
+        tasks = await repository.list()
+
+        assert len(tasks) == 2
+
+        completed = next(t for t in tasks if t.status == Status.COMPLETED)
+        next_task = next(t for t in tasks if t.status != Status.COMPLETED)
+
+        assert completed.title == next_task.title
+        assert next_task.due_date == date(2026, 8, 10)
+        assert next_task.recurring is True
 
     asyncio.run(run())
