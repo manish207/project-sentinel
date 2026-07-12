@@ -95,6 +95,31 @@ class FakeTaskRepository(TaskRepository):
     async def delete(self, task_id: UUID) -> bool:
         return self.tasks.pop(task_id, None) is not None
 
+    async def add_dependency(
+        self,
+        task_id: UUID,
+        dependency_id: UUID,
+    ) -> None:
+        task = self.tasks[task_id]
+
+        if dependency_id not in task.depends_on:
+            task.depends_on.append(dependency_id)
+
+    async def remove_dependency(
+        self,
+        task_id: UUID,
+        dependency_id: UUID,
+    ) -> None:
+        task = self.tasks[task_id]
+
+        if dependency_id in task.depends_on:
+            task.depends_on.remove(dependency_id)
+
+    async def ready_tasks(
+        self,
+    ) -> builtins.list[Task]:
+        return list(self.tasks.values())
+
 
 def test_task_service_creates_and_completes_task():
     async def run() -> None:
@@ -248,5 +273,94 @@ def test_complete_recurring_task_creates_next_occurrence():
         assert completed.title == next_task.title
         assert next_task.due_date == date(2026, 8, 10)
         assert next_task.recurring is True
+
+    asyncio.run(run())
+
+
+def test_add_dependency():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        task1 = await service.create_task("Frontend")
+        task2 = await service.create_task("Backend")
+
+        await service.add_dependency(
+            task1.id,
+            task2.id,
+        )
+
+        updated = await repository.get(task1.id)
+
+        assert updated is not None
+        assert updated.depends_on == [task2.id]
+
+    asyncio.run(run())
+
+
+def test_remove_dependency():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        task1 = await service.create_task("Frontend")
+        task2 = await service.create_task("Backend")
+
+        await service.add_dependency(
+            task1.id,
+            task2.id,
+        )
+
+        await service.remove_dependency(
+            task1.id,
+            task2.id,
+        )
+
+        updated = await repository.get(task1.id)
+
+        assert updated is not None
+        assert updated.depends_on == []
+
+    asyncio.run(run())
+
+
+def test_self_dependency_fails():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        task = await service.create_task("Backend")
+
+        with pytest.raises(InvalidTaskValueError):
+            await service.add_dependency(
+                task.id,
+                task.id,
+            )
+
+    asyncio.run(run())
+
+
+def test_duplicate_dependency_is_ignored():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        task1 = await service.create_task("Frontend")
+        task2 = await service.create_task("Backend")
+
+        await service.add_dependency(
+            task1.id,
+            task2.id,
+        )
+
+        await service.add_dependency(
+            task1.id,
+            task2.id,
+        )
+
+        updated = await repository.get(task1.id)
+
+        assert updated is not None
+        assert updated.depends_on == [task2.id]
 
     asyncio.run(run())

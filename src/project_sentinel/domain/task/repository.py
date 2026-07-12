@@ -80,3 +80,20 @@ class TaskRepository(Protocol):
         task_ids: Iterable[UUID],
     ) -> int:
         """Delete multiple tasks and return number deleted."""
+
+    async def add_dependency(
+        self,
+        task_id: UUID,
+        dependency_id: UUID,
+    ) -> None:
+        """Add dependency."""
+
+    async def remove_dependency(
+        self,
+        task_id: UUID,
+        dependency_id: UUID,
+    ) -> None:
+        """Remove dependency."""
+
+    async def ready_tasks(self) -> builtins.list[Task]:
+        """Return executable tasks."""

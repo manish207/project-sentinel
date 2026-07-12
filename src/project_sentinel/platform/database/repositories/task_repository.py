@@ -298,6 +298,39 @@ class SqlAlchemyTaskRepository:
             case TaskSort.CREATED:
                 return statement.order_by(TaskRecord.created_at, TaskRecord.title)
 
+    async def add_dependency(
+        self,
+        task_id: UUID,
+        dependency_id: UUID,
+    ) -> None:
+        task = await self.get(task_id)
+
+        if task is None:
+            return
+
+        if dependency_id not in task.depends_on:
+            task.depends_on.append(dependency_id)
+
+        await self.save(task)
+
+    async def remove_dependency(
+        self,
+        task_id: UUID,
+        dependency_id: UUID,
+    ) -> None:
+        task = await self.get(task_id)
+
+        if task is None:
+            return
+
+        if dependency_id in task.depends_on:
+            task.depends_on.remove(dependency_id)
+
+        await self.save(task)
+
+    async def ready_tasks(self) -> builtins.list[Task]:
+        return await self.list()
+
 
 def _coerce_date(value: date | str | None) -> date | None:
     if value is None or isinstance(value, date):

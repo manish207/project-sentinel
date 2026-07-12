@@ -197,6 +197,41 @@ class TaskService:
         await self._get_required(parent_task_id)
         return await self._repository.children(parent_task_id)
 
+    async def add_dependency(
+        self,
+        task_id: UUID,
+        dependency_id: UUID,
+    ) -> None:
+        task = await self._get_required(task_id)
+        dependency = await self._get_required(dependency_id)
+
+        if task.id == dependency.id:
+            raise InvalidTaskValueError("A task cannot depend on itself")
+
+        if dependency.id in task.depends_on:
+            return
+
+        await self._repository.add_dependency(
+            task.id,
+            dependency.id,
+        )
+
+    async def remove_dependency(
+        self,
+        task_id: UUID,
+        dependency_id: UUID,
+    ) -> None:
+        await self._get_required(task_id)
+        await self._get_required(dependency_id)
+
+        await self._repository.remove_dependency(
+            task_id,
+            dependency_id,
+        )
+
+    async def ready_tasks(self) -> list[Task]:
+        return await self._repository.ready_tasks()
+
 
 def parse_priority(value: str) -> Priority:
     try:
