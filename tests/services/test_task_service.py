@@ -118,7 +118,16 @@ class FakeTaskRepository(TaskRepository):
     async def ready_tasks(
         self,
     ) -> builtins.list[Task]:
-        return list(self.tasks.values())
+        ready: builtins.list[Task] = []
+        for task in self.tasks.values():
+            if task.status == Status.COMPLETED:
+                continue
+            dependencies = [
+                self.tasks[dep_id] for dep_id in task.depends_on if dep_id in self.tasks
+            ]
+            if all(dep.status == Status.COMPLETED for dep in dependencies):
+                ready.append(task)
+        return ready
 
 
 def test_task_service_creates_and_completes_task():
@@ -362,5 +371,104 @@ def test_duplicate_dependency_is_ignored():
 
         assert updated is not None
         assert updated.depends_on == [task2.id]
+
+    asyncio.run(run())
+
+
+def test_ready_tasks_dependency_completed():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        backend = await service.create_task("Backend")
+        frontend = await service.create_task("Frontend")
+
+        await service.add_dependency(
+            frontend.id,
+            backend.id,
+        )
+
+        await service.complete_task(backend.id)
+
+        ready = await service.ready_tasks()
+
+        assert any(task.id == frontend.id for task in ready)
+
+    asyncio.run(run())
+
+
+def test_ready_tasks_dependency_not_completed():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        backend = await service.create_task("Backend")
+        frontend = await service.create_task("Frontend")
+
+        await service.add_dependency(
+            frontend.id,
+            backend.id,
+        )
+
+        ready = await service.ready_tasks()
+
+        assert all(task.id != frontend.id for task in ready)
+
+    asyncio.run(run())
+
+
+def test_ready_tasks_multiple_dependencies():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        api = await service.create_task("API")
+        database = await service.create_task("Database")
+        auth = await service.create_task("Authentication")
+
+        await service.add_dependency(
+            auth.id,
+            api.id,
+        )
+
+        await service.add_dependency(
+            auth.id,
+            database.id,
+        )
+
+        await service.complete_task(api.id)
+        await service.complete_task(database.id)
+
+        ready = await service.ready_tasks()
+
+        assert any(task.id == auth.id for task in ready)
+
+    asyncio.run(run())
+
+
+def test_ready_tasks_one_dependency_incomplete():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        api = await service.create_task("API")
+        database = await service.create_task("Database")
+        auth = await service.create_task("Authentication")
+
+        await service.add_dependency(
+            auth.id,
+            api.id,
+        )
+
+        await service.add_dependency(
+            auth.id,
+            database.id,
+        )
+
+        await service.complete_task(api.id)
+
+        ready = await service.ready_tasks()
+
+        assert all(task.id != auth.id for task in ready)
 
     asyncio.run(run())

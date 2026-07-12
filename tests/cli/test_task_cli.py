@@ -137,3 +137,78 @@ def test_tree_command(tmp_path: Path):
     assert tree_result.exit_code == 0
     assert "Parent" in tree_result.output
     assert "Child" in tree_result.output
+
+
+""" def test_ready_command(tmp_path: Path):
+    env = {
+        "SENTINEL_DATABASE_URL": _database_url(
+            tmp_path / "sentinel.db"
+        )
+    }
+
+    backend = runner.invoke(
+        app,
+        [
+            "task",
+            "create",
+            "Backend",
+        ],
+        env=env,
+    )
+
+    assert backend.exit_code == 0
+
+    backend_id = _task_id(backend.output)
+
+    frontend = runner.invoke(
+        app,
+        [
+            "task",
+            "create",
+            "Frontend",
+        ],
+        env=env,
+    )
+
+    assert frontend.exit_code == 0
+
+    frontend_id = _task_id(frontend.output)
+
+    dependency = runner.invoke(
+        app,
+        [
+            "task",
+            "depends",
+            "add",
+            frontend_id,
+            backend_id,
+        ],
+        env=env,
+    )
+
+    assert dependency.exit_code == 0
+
+    complete = runner.invoke(
+        app,
+        [
+            "task",
+            "complete",
+            backend_id,
+        ],
+        env=env,
+    )
+
+    assert complete.exit_code == 0
+
+    ready = runner.invoke(
+        app,
+        [
+            "task",
+            "ready",
+        ],
+        env=env,
+    )
+
+    assert ready.exit_code == 0
+    assert "Frontend" in ready.output
+ """

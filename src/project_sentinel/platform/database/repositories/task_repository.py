@@ -329,7 +329,15 @@ class SqlAlchemyTaskRepository:
         await self.save(task)
 
     async def ready_tasks(self) -> builtins.list[Task]:
-        return await self.list()
+        tasks = await self.list()
+        ready = []
+        for task in tasks:
+            if task.status == Status.COMPLETED:
+                continue
+            dependencies = await self.get_many(task.depends_on)
+            if all(dep.status == Status.COMPLETED for dep in dependencies):
+                ready.append(task)
+        return ready
 
 
 def _coerce_date(value: date | str | None) -> date | None:

@@ -163,6 +163,18 @@ def search(text: str = typer.Argument(..., help="Search text")) -> None:
 
 
 @task_app.command()
+def ready() -> None:
+    """List ready-to-work tasks."""
+
+    async def action(service: TaskService) -> list[Task]:
+        return await service.ready_tasks()
+
+    tasks = _run_task_action(action)
+
+    _print_tasks(tasks)
+
+
+@task_app.command()
 def tree() -> None:
     """Display tasks as a hierarchy."""
 
