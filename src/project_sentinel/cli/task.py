@@ -24,6 +24,7 @@ from project_sentinel.services import (
     TaskService,
     TaskUpdate,
     TaskNode,
+    TaskGraphService,
     parse_priority,
     parse_status,
     today,
@@ -38,6 +39,11 @@ def _build_service(session: AsyncSession) -> TaskService:
     repository = SqlAlchemyTaskRepository(session)
     workspace_repository = SqlAlchemyWorkspaceRepository(session)
     return TaskService(repository, workspace_repository)
+
+
+def _build_graph_service(session: AsyncSession) -> TaskGraphService:
+    repository = SqlAlchemyTaskRepository(session)
+    return TaskGraphService(repository)
 
 
 @task_app.command()
@@ -153,10 +159,10 @@ def search(text: str = typer.Argument(..., help="Search text")) -> None:
 def tree() -> None:
     """Display tasks as a hierarchy."""
 
-    async def action(service: TaskService) -> list[TaskNode]:
-        return await service.task_tree()
+    async def action(graph: TaskGraphService) -> list[TaskNode]:
+        return await graph.task_tree()
 
-    roots = _run_task_action(action)
+    roots = _run_graph_action(action)
 
     if not roots:
         console.print("No tasks found.")
@@ -176,10 +182,10 @@ def children(
 ) -> None:
     """List direct subtasks."""
 
-    async def action(service: TaskService) -> list[Task]:
-        return await service.children(task_id)
+    async def action(graph: TaskGraphService) -> list[Task]:
+        return await graph.children(task_id)
 
-    tasks = _run_task_action(action)
+    tasks = _run_graph_action(action)
     _print_tasks(tasks)
 
 
@@ -320,6 +326,21 @@ def _run_task_action(action: Callable[[TaskService], Awaitable[T]]) -> T:
     try:
         return asyncio.run(
             with_session(lambda session: action(_build_service(session)))
+        )
+    except DomainError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+    except ValueError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+
+def _run_graph_action(
+    action: Callable[[TaskGraphService], Awaitable[T]],
+) -> T:
+    try:
+        return asyncio.run(
+            with_session(lambda session: action(_build_graph_service(session)))
         )
     except DomainError as error:
         console.print(f"[red]{error}[/red]")

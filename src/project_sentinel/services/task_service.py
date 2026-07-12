@@ -1,6 +1,5 @@
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
-from dataclasses import dataclass, field
 from calendar import monthrange
 
 from project_sentinel.domain.common import DomainError
@@ -16,12 +15,6 @@ class TaskNotFoundError(DomainError):
 
 class InvalidTaskValueError(DomainError):
     """Raised when task input is invalid."""
-
-
-@dataclass(slots=True)
-class TaskNode:
-    task: Task
-    children: list["TaskNode"] = field(default_factory=list)
 
 
 class TaskService:
@@ -60,23 +53,8 @@ class TaskService:
     ) -> list[Task]:
         return await self._repository.list(filters, sort)
 
-    async def task_tree(self) -> list[TaskNode]:
-        roots = await self._repository.root_tasks()
-        return [await self._build_tree(task) for task in roots]
-
-    async def _build_tree(self, task: Task) -> TaskNode:
-        children = await self._repository.children(task.id)
-
-        return TaskNode(
-            task=task,
-            children=[await self._build_tree(child) for child in children],
-        )
-
     async def search_tasks(self, text: str) -> list[Task]:
         return await self._repository.search(text)
-
-    async def children(self, parent_id: UUID) -> list[Task]:
-        return await self._repository.children(parent_id)
 
     async def update_task(self, task_id: UUID, update: TaskUpdate) -> Task:
         task = await self._get_required(task_id)

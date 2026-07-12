@@ -9,7 +9,7 @@ from .task_service import (
     today,
 )
 from .workspace_service import WorkspaceNotFoundError, WorkspaceService
-from .task_service import TaskNode
+from .task_graph_service import TaskGraphService, TaskNode
 
 __all__ = [
     "InvalidTaskValueError",
@@ -25,4 +25,5 @@ __all__ = [
     "parse_status",
     "today",
     "TaskNode",
+    "TaskGraphService",
 ]

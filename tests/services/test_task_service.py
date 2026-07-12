@@ -14,6 +14,7 @@ from project_sentinel.services import (
     TaskNotFoundError,
     TaskService,
     TaskUpdate,
+    TaskGraphService,
 )
 
 
@@ -162,6 +163,7 @@ def test_task_tree():
     async def run() -> None:
         repository = FakeTaskRepository()
         service = TaskService(repository)
+        graph = TaskGraphService(repository)
 
         parent = await service.create_task("Parent")
 
@@ -181,7 +183,7 @@ def test_task_tree():
             ),
         )
 
-        tree = await service.task_tree()
+        tree = await graph.task_tree()
 
         assert len(tree) == 1
         assert tree[0].task.title == "Parent"
