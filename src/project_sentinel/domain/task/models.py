@@ -97,6 +97,8 @@ class Task(Entity):
     parent_task_id: UUID | None = None
     project_id: UUID | None = None
     workspace_id: UUID | None = None
+    depends_on: list[UUID] = Field(default_factory=list)
+    blocked_by: list[UUID] = Field(default_factory=list)
 
     def complete(self) -> None:
         self.change_status(Status.COMPLETED)
@@ -137,3 +139,8 @@ class Task(Entity):
         if self.status != Status.COMPLETED and self.completed_at is not None:
             raise ValueError("completed_at requires completed status")
         return self
+
+    @field_validator("depends_on", "blocked_by")
+    @classmethod
+    def unique_ids(cls, values: list[UUID]) -> list[UUID]:
+        return list(dict.fromkeys(values))
