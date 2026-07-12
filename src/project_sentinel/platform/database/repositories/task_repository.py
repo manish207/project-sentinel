@@ -246,6 +246,8 @@ class SqlAlchemyTaskRepository:
             conditions.append(TaskRecord.status == filters.status.value)
         if filters.priority is not None:
             conditions.append(TaskRecord.priority == filters.priority.value)
+        if filters.importance is not None:
+            conditions.append(TaskRecord.importance == filters.importance.value)
         if filters.project_id is not None:
             conditions.append(TaskRecord.project_id == str(filters.project_id))
         if filters.workspace_id is not None:

@@ -3,7 +3,7 @@ from uuid import UUID
 from calendar import monthrange
 
 from project_sentinel.domain.common import DomainError
-from project_sentinel.domain.common import Priority, Status
+from project_sentinel.domain.common import Priority, Status, Importance
 from project_sentinel.domain.task import Task, TaskFilters, TaskRepository, TaskSort
 from project_sentinel.domain.workspace import Workspace, WorkspaceRepository
 from project_sentinel.services.task_inputs import TaskCreate, TaskUpdate
@@ -203,6 +203,13 @@ def parse_priority(value: str) -> Priority:
         return Priority(value.lower())
     except ValueError as error:
         raise InvalidTaskValueError(f"Invalid priority: {value}") from error
+
+
+def parse_importance(value: str) -> Importance:
+    try:
+        return Importance(value.lower())
+    except ValueError as error:
+        raise InvalidTaskValueError(f"Invalid importance: {value}") from error
 
 
 def parse_status(value: str) -> Status:

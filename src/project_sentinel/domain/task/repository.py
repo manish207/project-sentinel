@@ -8,7 +8,7 @@ from typing import Protocol
 from uuid import UUID
 from collections.abc import Iterable
 
-from project_sentinel.domain.common import Priority, Status
+from project_sentinel.domain.common import Priority, Status, Importance
 from project_sentinel.domain.task.models import Task
 
 
@@ -23,6 +23,7 @@ class TaskSort(StrEnum):
 class TaskFilters:
     status: Status | None = None
     priority: Priority | None = None
+    importance: Importance | None = None
     project_id: UUID | None = None
     workspace_id: UUID | None = None
     due_today: date | None = None

@@ -28,6 +28,7 @@ from project_sentinel.services import (
     parse_priority,
     parse_status,
     today,
+    parse_importance,
 )
 
 task_app = typer.Typer(help="Manage tasks", no_args_is_help=True)
@@ -51,6 +52,7 @@ def create(
     title: str = typer.Argument(..., help="Task title"),
     description: str = typer.Option("", "--description", "-d"),
     priority: str = typer.Option("medium", "--priority", "-p"),
+    importance: str = typer.Option("high", "--importance"),
     tag: list[str] | None = typer.Option(None, "--tag", "-t"),
     due_date: str | None = typer.Option(None, "--due-date"),
     scheduled_date: str | None = typer.Option(None, "--scheduled-date"),
@@ -71,6 +73,7 @@ def create(
                 title=title,
                 description=description,
                 priority=parse_priority(priority),
+                importance=parse_importance(importance),
                 tags=tag,
                 due_date=_parse_date(due_date),
                 scheduled_date=_parse_date(scheduled_date),
@@ -94,6 +97,7 @@ def add_subtask(
     title: str = typer.Argument(..., help="Subtask title"),
     description: str = typer.Option("", "--description", "-d"),
     priority: str = typer.Option("medium", "--priority", "-p"),
+    importance: str = typer.Option("high", "--importance"),
 ) -> None:
     """Create a subtask."""
 
@@ -104,6 +108,7 @@ def add_subtask(
                 title=title,
                 description=description,
                 priority=parse_priority(priority),
+                importance=parse_importance(importance),
                 parent_task_id=parent_id,
             ),
         )
@@ -117,6 +122,7 @@ def add_subtask(
 def list_tasks(
     status: str | None = typer.Option(None, "--status"),
     priority: str | None = typer.Option(None, "--priority"),
+    importance: str | None = typer.Option(None, "--importance"),
     project_id: UUID | None = typer.Option(None, "--project"),
     workspace_id: UUID | None = typer.Option(None, "--workspace"),
     due_today: bool = typer.Option(False, "--today"),
@@ -131,6 +137,7 @@ def list_tasks(
             TaskFilters(
                 status=parse_status(status) if status else None,
                 priority=parse_priority(priority) if priority else None,
+                importance=(parse_importance(importance) if importance else None),
                 project_id=project_id,
                 workspace_id=workspace_id,
                 due_today=today() if due_today else None,
@@ -195,6 +202,7 @@ def update(
     title: str | None = typer.Option(None, "--title"),
     description: str | None = typer.Option(None, "--description", "-d"),
     priority: str | None = typer.Option(None, "--priority", "-p"),
+    importance: str | None = typer.Option(None, "--importance"),
     status: str | None = typer.Option(None, "--status"),
     tag: list[str] | None = typer.Option(None, "--tag", "-t"),
     due_date: str | None = typer.Option(None, "--due-date"),
@@ -217,6 +225,7 @@ def update(
                 title=title,
                 description=description,
                 priority=parse_priority(priority) if priority else None,
+                importance=(parse_importance(importance) if importance else None),
                 status=parse_status(status) if status else None,
                 tags=tag,
                 due_date=_parse_date(due_date),
@@ -275,6 +284,7 @@ def _print_tasks(tasks: list[Task]) -> None:
     table.add_column("ID", no_wrap=True, overflow="ignore")
     table.add_column("Status")
     table.add_column("Priority")
+    table.add_column("Importance")
     table.add_column("Due")
     table.add_column("Title")
 
@@ -283,6 +293,7 @@ def _print_tasks(tasks: list[Task]) -> None:
             str(task.id),
             task.status.value,
             task.priority.value,
+            task.importance.value,
             task.due_date.isoformat() if task.due_date else "",
             task.title,
         )

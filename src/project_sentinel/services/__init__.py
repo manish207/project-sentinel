@@ -7,6 +7,7 @@ from .task_service import (
     parse_priority,
     parse_status,
     today,
+    parse_importance,
 )
 from .workspace_service import WorkspaceNotFoundError, WorkspaceService
 from .task_graph_service import TaskGraphService, TaskNode
@@ -26,4 +27,5 @@ __all__ = [
     "today",
     "TaskNode",
     "TaskGraphService",
+    "parse_importance",
 ]
