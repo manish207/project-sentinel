@@ -9,7 +9,13 @@ from collections.abc import Iterable
 from sqlalchemy import Select, and_, case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from project_sentinel.domain.common import AuditInfo, Priority, Source, Status
+from project_sentinel.domain.common import (
+    AuditInfo,
+    Priority,
+    Source,
+    Status,
+    Importance,
+)
 from project_sentinel.domain.task import Task, TaskFilters, TaskSort
 from project_sentinel.platform.database.models import TaskRecord
 
@@ -156,6 +162,7 @@ class SqlAlchemyTaskRepository:
             description=task.description,
             status=task.status.value,
             priority=task.priority.value,
+            importance=task.importance.value,
             source=task.source.value,
             tags=json.dumps(task.tags),
             due_date=task.due_date,
@@ -178,6 +185,7 @@ class SqlAlchemyTaskRepository:
         record.description = task.description
         record.status = task.status.value
         record.priority = task.priority.value
+        record.importance = task.importance.value
         record.source = task.source.value
         record.tags = json.dumps(task.tags)
         record.due_date = task.due_date
@@ -203,6 +211,7 @@ class SqlAlchemyTaskRepository:
             description=record.description,
             status=Status(record.status),
             priority=Priority(record.priority),
+            importance=Importance(record.importance),
             source=Source(record.source),
             tags=json.loads(record.tags or "[]"),
             due_date=_coerce_date(record.due_date),

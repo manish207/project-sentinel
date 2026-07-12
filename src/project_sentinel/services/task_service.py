@@ -33,6 +33,7 @@ class TaskService:
             title=title,
             description=data.description,
             priority=data.priority,
+            importance=data.importance,
             tags=data.tags or [],
             due_date=data.due_date,
             scheduled_date=data.scheduled_date,
@@ -65,6 +66,8 @@ class TaskService:
             task.description = update.description
         if update.priority is not None:
             task.priority = update.priority
+        if update.importance is not None:
+            task.importance = update.importance
         if update.tags is not None:
             task.tags = update.tags
         if update.due_date is not None:

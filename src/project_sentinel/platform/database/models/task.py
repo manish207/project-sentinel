@@ -15,6 +15,7 @@ class TaskRecord(Base):
     description: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
     status: Mapped[str] = mapped_column(String(50), nullable=False)
     priority: Mapped[str] = mapped_column(String(50), nullable=False)
+    importance = mapped_column(String(20), nullable=False, default="high")
     source: Mapped[str] = mapped_column(String(50), nullable=False)
     tags: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)

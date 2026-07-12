@@ -4,7 +4,14 @@ from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
-from project_sentinel.domain.common import DomainError, Entity, Priority, Source, Status
+from project_sentinel.domain.common import (
+    DomainError,
+    Entity,
+    Priority,
+    Source,
+    Status,
+    Importance,
+)
 
 ALLOWED_STATUS_TRANSITIONS: dict[Status, set[Status]] = {
     Status.INBOX: {
@@ -76,6 +83,7 @@ class Task(Entity):
     description: str = Field(default="", max_length=2000)
     status: Status = Status.INBOX
     priority: Priority = Priority.MEDIUM
+    importance: Importance = Importance.HIGH
     source: Source = Source.MANUAL
     tags: list[str] = Field(default_factory=list)
     due_date: date | None = None

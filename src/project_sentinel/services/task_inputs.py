@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 from typing import Literal
-from project_sentinel.domain.common import Priority, Status
+from project_sentinel.domain.common import Priority, Status, Importance
 
 
 @dataclass(frozen=True)
@@ -10,6 +10,7 @@ class TaskCreate:
     title: str
     description: str = ""
     priority: Priority = Priority.MEDIUM
+    importance: Importance = Importance.HIGH
     tags: list[str] | None = None
     due_date: date | None = None
     scheduled_date: date | None = None
@@ -35,6 +36,7 @@ class TaskUpdate:
     title: str | None = None
     description: str | None = None
     priority: Priority | None = None
+    importance: Importance | None = None
     status: Status | None = None
     tags: list[str] | None = None
     due_date: date | None = None
