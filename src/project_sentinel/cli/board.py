@@ -78,9 +78,7 @@ def show(ctx: typer.Context):
             table.add_column(status.value.replace("_", " ").title(), justify="left")
 
         # Build Panels for each status column
-        from typing import Any
-
-        row_renderables: list[Any] = []
+        row_renderables: list[Group | Text] = []
         for status in status_order:
             status_tasks = columns_data[status]
             panels = []
