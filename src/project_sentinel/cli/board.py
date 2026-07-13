@@ -7,6 +7,7 @@ from rich.table import Table
 from rich.text import Text
 
 from project_sentinel.domain.common import Status
+from project_sentinel.domain.task.models import Task
 from project_sentinel.services.task_service import TaskService
 from project_sentinel.platform.database.repositories.task_repository import (
     SqlAlchemyTaskRepository,
@@ -38,8 +39,6 @@ def show(ctx: typer.Context):
         return
 
     async def _show(service: TaskService):
-        from project_sentinel.domain.task.models import Task
-
         tasks = await service.list_tasks()
 
         # Group tasks by status
