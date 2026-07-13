@@ -117,6 +117,7 @@ class SqlAlchemyTaskRepository:
         return persisted
 
     async def save(self, task: Task) -> Task:
+        print("Saving:", task.depends_on)
         record = await self._session.get(TaskRecord, str(task.id))
         if record is None:
             self._session.add(self._to_record(task))
@@ -176,6 +177,7 @@ class SqlAlchemyTaskRepository:
             parent_task_id=str(task.parent_task_id) if task.parent_task_id else None,
             project_id=str(task.project_id) if task.project_id else None,
             workspace_id=str(task.workspace_id) if task.workspace_id else None,
+            depends_on=json.dumps([str(x) for x in task.depends_on]),
             created_at=task.audit.created_at,
             updated_at=task.audit.updated_at,
         )
@@ -201,10 +203,12 @@ class SqlAlchemyTaskRepository:
         )
         record.project_id = str(task.project_id) if task.project_id else None
         record.workspace_id = str(task.workspace_id) if task.workspace_id else None
+        record.depends_on = json.dumps([str(x) for x in task.depends_on])
         record.created_at = task.audit.created_at
         record.updated_at = task.audit.updated_at
 
     def _to_domain(self, record: TaskRecord) -> Task:
+        print("Loaded depends_on:", record.depends_on)
         return Task(
             id=UUID(record.id),
             title=record.title,
@@ -227,6 +231,7 @@ class SqlAlchemyTaskRepository:
             ),
             project_id=UUID(record.project_id) if record.project_id else None,
             workspace_id=UUID(record.workspace_id) if record.workspace_id else None,
+            depends_on=[UUID(x) for x in json.loads(record.depends_on or "[]")],
             audit=AuditInfo(
                 created_at=_coerce_datetime(record.created_at),
                 updated_at=_coerce_datetime(record.updated_at),
@@ -307,10 +312,10 @@ class SqlAlchemyTaskRepository:
 
         if task is None:
             return
-
+        print("Before:", task.depends_on)
         if dependency_id not in task.depends_on:
             task.depends_on.append(dependency_id)
-
+        print("After:", task.depends_on)
         await self.save(task)
 
     async def remove_dependency(

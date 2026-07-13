@@ -31,6 +31,11 @@ class TaskRecord(Base):
     parent_task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     project_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     workspace_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    depends_on: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        default="[]",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )

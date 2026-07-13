@@ -35,6 +35,13 @@ task_app = typer.Typer(help="Manage tasks", no_args_is_help=True)
 console = Console(width=160)
 T = TypeVar("T")
 
+depends_app = typer.Typer(help="Manage task dependencies")
+
+task_app.add_typer(
+    depends_app,
+    name="depends",
+)
+
 
 def _build_service(session: AsyncSession) -> TaskService:
     repository = SqlAlchemyTaskRepository(session)
@@ -255,6 +262,69 @@ def update(
 
     task = _run_task_action(action)
     console.print(f"Updated task {task.id}: {task.title}")
+
+
+async def dependencies(
+    self,
+    task_id: UUID,
+) -> list[Task]:
+    task = await self._get_required(task_id)
+
+    return await self._repository.get_many(
+        task.depends_on,
+    )
+
+
+@depends_app.command("add")
+def add_dependency(
+    task_id: UUID,
+    dependency_id: UUID,
+) -> None:
+    """Add a dependency."""
+
+    async def action(service: TaskService) -> None:
+        await service.add_dependency(
+            task_id,
+            dependency_id,
+        )
+
+    _run_task_action(action)
+
+    console.print(f"Added dependency {dependency_id} -> {task_id}")
+
+
+@depends_app.command("remove")
+def remove_dependency(
+    task_id: UUID,
+    dependency_id: UUID,
+) -> None:
+    """Remove a dependency."""
+
+    async def action(service: TaskService) -> None:
+        await service.remove_dependency(
+            task_id,
+            dependency_id,
+        )
+
+    _run_task_action(action)
+
+    console.print(f"Removed dependency {dependency_id} from {task_id}")
+
+
+@depends_app.command("list")
+def list_dependencies(
+    task_id: UUID,
+) -> None:
+    """List task dependencies."""
+
+    async def action(
+        service: TaskService,
+    ) -> list[Task]:
+        return await service.dependencies(task_id)
+
+    tasks = _run_task_action(action)
+
+    _print_tasks(tasks)
 
 
 def _build_tree(branch: Tree, node: TaskNode) -> None:

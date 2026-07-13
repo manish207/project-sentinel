@@ -139,6 +139,157 @@ def test_tree_command(tmp_path: Path):
     assert "Child" in tree_result.output
 
 
+def test_dependency_add_command(tmp_path: Path):
+    env = {"SENTINEL_DATABASE_URL": _database_url(tmp_path / "sentinel.db")}
+
+    backend = runner.invoke(
+        app,
+        ["task", "create", "Backend"],
+        env=env,
+    )
+    assert backend.exit_code == 0
+    backend_id = _task_id(backend.output)
+
+    frontend = runner.invoke(
+        app,
+        ["task", "create", "Frontend"],
+        env=env,
+    )
+    assert frontend.exit_code == 0
+    frontend_id = _task_id(frontend.output)
+
+    result = runner.invoke(
+        app,
+        [
+            "task",
+            "depends",
+            "add",
+            frontend_id,
+            backend_id,
+        ],
+        env=env,
+    )
+
+    assert result.exit_code == 0
+    assert "Added dependency" in result.output
+
+
+def test_dependency_remove_command(tmp_path: Path):
+    env = {"SENTINEL_DATABASE_URL": _database_url(tmp_path / "sentinel.db")}
+
+    backend = runner.invoke(
+        app,
+        ["task", "create", "Backend"],
+        env=env,
+    )
+    backend_id = _task_id(backend.output)
+
+    frontend = runner.invoke(
+        app,
+        ["task", "create", "Frontend"],
+        env=env,
+    )
+    frontend_id = _task_id(frontend.output)
+
+    runner.invoke(
+        app,
+        [
+            "task",
+            "depends",
+            "add",
+            frontend_id,
+            backend_id,
+        ],
+        env=env,
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "task",
+            "depends",
+            "remove",
+            frontend_id,
+            backend_id,
+        ],
+        env=env,
+    )
+
+    assert result.exit_code == 0
+    assert "Removed dependency" in result.output
+
+
+def test_dependency_list_command(tmp_path: Path):
+    env = {"SENTINEL_DATABASE_URL": _database_url(tmp_path / "sentinel.db")}
+
+    backend = runner.invoke(
+        app,
+        ["task", "create", "Backend"],
+        env=env,
+    )
+    backend_id = _task_id(backend.output)
+
+    frontend = runner.invoke(
+        app,
+        ["task", "create", "Frontend"],
+        env=env,
+    )
+    frontend_id = _task_id(frontend.output)
+
+    runner.invoke(
+        app,
+        [
+            "task",
+            "depends",
+            "add",
+            frontend_id,
+            backend_id,
+        ],
+        env=env,
+    )
+
+    add_result = runner.invoke(
+        app,
+        [
+            "task",
+            "depends",
+            "add",
+            frontend_id,
+            backend_id,
+        ],
+        env=env,
+    )
+
+    assert add_result.exit_code == 0
+    print(add_result.output)
+
+
+def test_dependency_list_empty(tmp_path: Path):
+    env = {"SENTINEL_DATABASE_URL": _database_url(tmp_path / "sentinel.db")}
+
+    task = runner.invoke(
+        app,
+        ["task", "create", "Backend"],
+        env=env,
+    )
+
+    task_id = _task_id(task.output)
+
+    result = runner.invoke(
+        app,
+        [
+            "task",
+            "depends",
+            "list",
+            task_id,
+        ],
+        env=env,
+    )
+
+    assert result.exit_code == 0
+    assert "No tasks found." in result.output
+
+
 """ def test_ready_command(tmp_path: Path):
     env = {
         "SENTINEL_DATABASE_URL": _database_url(

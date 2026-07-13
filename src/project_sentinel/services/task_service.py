@@ -232,6 +232,16 @@ class TaskService:
     async def ready_tasks(self) -> list[Task]:
         return await self._repository.ready_tasks()
 
+    async def dependencies(
+        self,
+        task_id: UUID,
+    ) -> list[Task]:
+        task = await self._get_required(task_id)
+
+        return await self._repository.get_many(
+            task.depends_on,
+        )
+
 
 def parse_priority(value: str) -> Priority:
     try:
