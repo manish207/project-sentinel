@@ -168,6 +168,8 @@ class SqlAlchemyTaskRepository:
             tags=json.dumps(task.tags),
             due_date=task.due_date,
             scheduled_date=task.scheduled_date,
+            start_time=task.start_time,
+            end_time=task.end_time,
             recurring=task.recurring,
             repeat_every=task.repeat_every,
             repeat_unit=task.repeat_unit,
@@ -192,6 +194,8 @@ class SqlAlchemyTaskRepository:
         record.tags = json.dumps(task.tags)
         record.due_date = task.due_date
         record.scheduled_date = task.scheduled_date
+        record.start_time = task.start_time
+        record.end_time = task.end_time
         record.recurring = task.recurring
         record.repeat_every = task.repeat_every
         record.repeat_unit = task.repeat_unit
@@ -220,6 +224,8 @@ class SqlAlchemyTaskRepository:
             tags=json.loads(record.tags or "[]"),
             due_date=_coerce_date(record.due_date),
             scheduled_date=_coerce_date(record.scheduled_date),
+            start_time=_coerce_optional_datetime(record.start_time),
+            end_time=_coerce_optional_datetime(record.end_time),
             recurring=record.recurring,
             repeat_every=record.repeat_every,
             repeat_unit=record.repeat_unit,
@@ -273,6 +279,10 @@ class SqlAlchemyTaskRepository:
                 else TaskRecord.status != Status.COMPLETED.value
             )
             conditions.append(operator)
+        if filters.time_range_start is not None:
+            conditions.append(TaskRecord.start_time >= filters.time_range_start)
+        if filters.time_range_end is not None:
+            conditions.append(TaskRecord.start_time < filters.time_range_end)
 
         if conditions:
             return statement.where(and_(*conditions))

@@ -20,6 +20,12 @@ class TaskRecord(Base):
     tags: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     scheduled_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    start_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    end_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     recurring = mapped_column(Boolean, default=False)
     repeat_every = mapped_column(Integer, nullable=True)
     repeat_unit = mapped_column(String(20), nullable=True)

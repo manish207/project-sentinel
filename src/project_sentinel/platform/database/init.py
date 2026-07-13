@@ -25,6 +25,8 @@ async def _migrate_sqlite(connection) -> None:
         "actual_minutes": "ALTER TABLE tasks ADD COLUMN actual_minutes INTEGER",
         "parent_task_id": "ALTER TABLE tasks ADD COLUMN parent_task_id VARCHAR(36)",
         "workspace_id": "ALTER TABLE tasks ADD COLUMN workspace_id VARCHAR(36)",
+        "start_time": "ALTER TABLE tasks ADD COLUMN start_time DATETIME",
+        "end_time": "ALTER TABLE tasks ADD COLUMN end_time DATETIME",
     }
     for column, statement in migrations.items():
         if column not in task_columns:

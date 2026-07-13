@@ -88,6 +88,8 @@ class Task(Entity):
     tags: list[str] = Field(default_factory=list)
     due_date: date | None = None
     scheduled_date: date | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
     recurring: bool = False
     repeat_every: int | None = None
     repeat_unit: Literal["day", "week", "month", "year"] | None = None
@@ -134,6 +136,12 @@ class Task(Entity):
             and self.scheduled_date > self.due_date
         ):
             raise ValueError("scheduled_date cannot be after due_date")
+        if (
+            self.start_time is not None
+            and self.end_time is not None
+            and self.start_time >= self.end_time
+        ):
+            raise ValueError("start_time must be before end_time")
         if self.status == Status.COMPLETED and self.completed_at is None:
             self.completed_at = datetime.now(UTC)
         if self.status != Status.COMPLETED and self.completed_at is not None:

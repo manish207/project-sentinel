@@ -31,8 +31,24 @@ class FakeTaskRepository(TaskRepository):
         filters: TaskFilters | None = None,
         sort: TaskSort = TaskSort.CREATED,
     ) -> builtins.list[Task]:
-        _ = filters, sort
-        return list(self.tasks.values())
+        _ = sort
+        tasks = list(self.tasks.values())
+        if filters:
+            if filters.time_range_start is not None:
+                tasks = [
+                    t
+                    for t in tasks
+                    if t.start_time is not None
+                    and t.start_time >= filters.time_range_start
+                ]
+            if filters.time_range_end is not None:
+                tasks = [
+                    t
+                    for t in tasks
+                    if t.start_time is not None
+                    and t.start_time < filters.time_range_end
+                ]
+        return tasks
 
     async def search(self, text: str) -> builtins.list[Task]:
         return [

@@ -1,0 +1,446 @@
+Project Sentinel – Development Summary & Roadmap
+Project Name: Project Sentinel
+Repository: project-sentinel
+Primary Goal: Build a modern, local-first, AI-ready, extensible personal productivity and work management platform that combines task management, project management, scheduling, planning, knowledge management, automation, and AI assistance into a single unified ecosystem.
+Unlike traditional task managers (Todoist, TickTick, Microsoft To Do, Things, etc.), Project Sentinel is being designed as an intelligent planning engine capable of understanding relationships between work items rather than simply storing lists.
+
+Vision
+Project Sentinel aims to become an AI-first productivity platform that helps answer questions such as:
+What should I work on next?
+What tasks are blocking my project?
+Which work is overdue?
+Can I finish this project before Friday?
+What is the critical path of this project?
+How should I plan today's schedule?
+The backend is intentionally designed first so that multiple clients (CLI, Web, Desktop, Mobile, AI Agents) can use the same business logic.
+
+Technology Stack
+Language
+Python 3.14+
+Package Manager
+uv
+CLI
+Typer
+Database
+SQLite (development)
+PostgreSQL (planned)
+ORM
+SQLAlchemy (Async)
+Validation
+Pydantic
+Testing
+Pytest
+Static Analysis
+Ruff
+MyPy
+
+Architecture
+The project follows Clean Architecture principles.
+CLI
+        │
+        ▼
+Application Services
+        │
+        ▼
+Domain Layer
+        │
+        ▼
+Repository Interfaces
+        │
+        ▼
+SQLAlchemy Repository
+        │
+        ▼
+SQLite / PostgreSQL
+The domain layer has no dependency on the database.
+Repositories implement Protocol interfaces allowing easy replacement of storage engines.
+
+Current Domain Model
+Implemented entities include:
+Workspace
+Project
+Task
+Base Entity
+Audit Information
+Every entity supports:
+UUID
+created_at
+updated_at
+
+Task System
+Implemented task attributes:
+Title
+Description
+Status
+Priority
+Importance
+Source
+Tags
+Due Date
+Scheduled Date
+Recurring Flag
+Repeat Interval
+Repeat Unit
+Completion Timestamp
+Estimated Minutes
+Actual Minutes
+Parent Task
+Project
+Workspace
+Dependencies
+
+Status Workflow
+Implemented workflow:
+Inbox
+    ↓
+Planned
+    ↓
+Ready
+    ↓
+In Progress
+    ↓
+Completed
+Additional states:
+Waiting
+Blocked
+Cancelled
+Archived
+Illegal transitions raise domain exceptions.
+
+Priority Levels
+Implemented:
+Critical
+High
+Medium
+Low
+
+Importance Levels
+Implemented:
+High
+Medium
+Low
+Importance is independent from Priority to support the Eisenhower Matrix in future releases.
+
+Recurring Tasks
+Fully implemented.
+Supported intervals:
+Daily
+Weekly
+Monthly
+Yearly
+Current behaviour:
+When a recurring task is completed:
+original task becomes Completed
+next occurrence is automatically generated
+recurrence settings are preserved
+next due date is calculated correctly
+Monthly recurrence correctly handles month boundaries.
+Yearly recurrence correctly handles leap years.
+
+Task Hierarchy
+Implemented.
+Supports unlimited nesting.
+Example:
+Project Sentinel
+
+    Backend
+
+        API
+
+            Authentication
+
+        Database
+
+            PostgreSQL
+
+    Frontend
+
+        Dashboard
+Implemented features:
+Parent Task
+Child Task
+Recursive Tree
+CLI Tree View
+
+Dependency Graph
+Implemented.
+Tasks may depend on other tasks.
+Example:
+Backend
+      ↓
+API
+      ↓
+Frontend
+Implemented operations:
+Add dependency
+Remove dependency
+List dependencies
+Duplicate dependencies are prevented.
+Self dependencies are prevented.
+
+Cycle Detection
+Implemented.
+The dependency graph is guaranteed to remain acyclic.
+Supported detection:
+A → B
+B → A
+A → B
+B → C
+C → A
+Longer cycles are also rejected using DFS-based graph traversal.
+
+Ready Task Engine
+Implemented.
+A task becomes Ready only when all dependency tasks have been completed.
+The CLI supports:
+project-sentinel task ready
+This forms the foundation of the future scheduling engine.
+
+Task Tree
+Implemented.
+Example:
+Parent
+
+├── Child 1
+
+│   └── Grand Child
+
+└── Child 2
+Tree construction is recursive through the service layer.
+
+Repository Layer
+Implemented repositories:
+Workspace Repository
+Project Repository
+Task Repository
+Features:
+CRUD
+Search
+Filtering
+Sorting
+Tree traversal
+Dependency persistence
+Ready task queries
+
+Persistence
+Implemented persistence for:
+hierarchy
+recurring tasks
+importance
+dependencies
+Serialization includes:
+tags
+dependency IDs
+dates
+UUIDs
+
+CLI Commands
+Implemented commands include:
+Workspace
+workspace create
+workspace list
+workspace delete
+Project
+project create
+project list
+project delete
+Task
+task create
+task update
+task delete
+task list
+task search
+task complete
+task tree
+task ready
+task depends add
+task depends remove
+task depends list
+
+Validation
+Implemented validation:
+invalid priority
+invalid status
+invalid transitions
+scheduled date after due date
+duplicate tags
+self dependency
+dependency cycles
+
+Testing
+Current status:
+40+ automated tests
+CLI tests
+Service tests
+Repository tests
+Domain tests
+Coverage includes:
+CRUD
+Tree building
+Ready tasks
+Recurring tasks
+Dependency graph
+Cycle detection
+Repository persistence
+CLI behaviour
+Every commit passes:
+ruff
+
+mypy
+
+pytest
+before merging.
+
+Major Technical Challenges Solved
+During development the following issues were identified and resolved:
+MyPy Protocol Compatibility
+Created proper repository implementations matching Protocol interfaces.
+
+Repository Serialization
+Implemented JSON serialization/deserialization for:
+tags
+dependency lists
+
+Recurring Task Engine
+Implemented automatic creation of next occurrences while preserving recurrence metadata.
+
+Dependency Persistence Bug
+Fixed missing persistence of dependency IDs in SQLAlchemy models.
+
+Cycle Detection
+Implemented graph traversal preventing circular dependencies.
+
+CLI Type Safety
+Resolved Literal typing issues with repeat units and importance parsing.
+
+Code Quality
+Current codebase follows:
+Clean Architecture
+Dependency Injection
+Repository Pattern
+Protocol Interfaces
+Service Layer
+Async Programming
+Type Safety
+Static Analysis
+Test Driven Development
+
+Current Project Status
+The backend has evolved beyond a simple CRUD task manager.
+Project Sentinel now possesses a true task execution engine featuring:
+hierarchy
+dependencies
+recurrence
+workflow
+validation
+persistence
+This establishes the core planning model upon which advanced scheduling and AI capabilities can be built.
+
+Roadmap
+Milestone 1 — Core Domain (Completed)
+Entities
+CRUD
+Validation
+
+Milestone 2 — Hierarchy (Completed)
+Parent/Child Tasks
+Task Trees
+
+Milestone 3 — Recurring Tasks (Completed)
+Daily
+Weekly
+Monthly
+Yearly
+
+Milestone 4 — Dependency Graph (Completed)
+Dependencies
+Ready Tasks
+Cycle Detection
+
+Milestone 5 — Intelligent Scheduler (Next)
+Implement a scoring engine that recommends what to work on next using:
+dependencies
+due dates
+scheduled dates
+priority
+importance
+estimated duration
+overdue status
+CLI:
+project-sentinel task next
+
+Milestone 6 — Calendar Engine
+Views:
+Today
+Tomorrow
+Week
+Month
+Automatic time blocking.
+
+Milestone 7 — Kanban Board
+Columns:
+Inbox
+Planned
+Ready
+In Progress
+Waiting
+Completed
+
+Milestone 8 — Eisenhower Matrix
+Automatically classify tasks into:
+Do
+Schedule
+Delegate
+Eliminate
+using Priority and Importance.
+
+Milestone 9 — Critical Path Analysis
+Compute:
+longest dependency chain
+project bottlenecks
+estimated completion dates
+using dependency graphs.
+
+Milestone 10 — AI Planning Engine
+AI-powered features:
+What should I work on today?
+Project risk analysis
+Daily planning
+Workload balancing
+Intelligent prioritization
+Context-aware recommendations
+
+Milestone 11 — Notifications & Automation
+Integrations:
+Email
+Google Calendar
+Google Tasks
+TickTick
+GitHub
+Slack
+Microsoft Teams
+
+Milestone 12 — Web Dashboard
+Backend:
+FastAPI
+Frontend:
+React
+Tailwind CSS
+Views:
+Dashboard
+Calendar
+Kanban
+Timeline
+Analytics
+
+Milestone 13 — Desktop & Mobile
+Future clients:
+Electron Desktop App
+Android
+iOS
+All powered by the same backend services.
+
+Long-Term Vision
+Project Sentinel is intended to become a comprehensive personal operating system for work and life management. Rather than functioning as another task list, it will serve as an intelligent decision-support platform that combines task execution, planning, scheduling, automation, analytics, and AI assistance.
+By leveraging structured task relationships, dependencies, recurrence, priorities, and contextual information, Sentinel will evolve into a system capable of proactively guiding users toward their most impactful work while remaining extensible through plugins and integrations. The long-term objective is to create a local-first, privacy-conscious platform that can rival or surpass commercial productivity suites while remaining fully under the user's control.
+This serves as a solid project record. As the project grows, you can maintain it as a living PROJECT_HISTORY.md or ARCHITECTURE.md document in the repository and update it at the end of each milestone.

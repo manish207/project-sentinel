@@ -1,0 +1,143 @@
+Project Sentinel Memory
+
+Project Vision
+
+Project Sentinel is intended to be a local-first, AI-first personal
+operating system rather than just another task manager.
+
+The long-term objective is to combine: - Task Management - Project
+Management - Scheduling - Knowledge Management - AI Assistant -
+Automation - Integrations - Personal Dashboard
+
+into one platform.
+
+It is designed to become an intelligent planning engine rather than a
+checklist application.
+
+Design Principles
+
+-   Local First
+-   API First
+-   Plugin First
+-   AI Ready
+-   Extensible
+-   Modular
+-   Privacy Friendly
+
+Planned Architecture
+
+Platform Core → Domain Layer → Services → Repository Layer → REST API →
+CLI → Dashboard → AI Engine → Plugin Layer
+
+Planned Technology Stack
+
+Backend: - Python - FastAPI - SQLAlchemy Async - Pydantic - PostgreSQL -
+Redis (future)
+
+CLI: - Typer
+
+Frontend (planned): - React
+
+AI: - Ollama initially - Future LLM providers
+
+Plugin Architecture
+
+Planned plugins: - Calendar - Email - GitHub - Google Tasks - TickTick
+
+GitHub Repository
+
+https://github.com/manish207/project-sentinel
+
+Original Requirements
+
+Support for: - Workspaces - Projects - Tasks - Notes - Labels -
+Categories
+
+Personal categories: - Wedding - Renovation - Business - Finance -
+Travel - C-DOT - Misc
+
+Eisenhower Matrix
+
+Future classification: - Urgent & Important - Important - Urgent -
+Neither
+
+Based on Priority and Importance.
+
+Daily Planner
+
+Planned: - Morning Summary - Evening Summary - Top 3–5 Tasks - Analytics
+
+Notifications
+
+Preferred: - Email notifications only.
+
+AI Features
+
+Planned capabilities: - What should I work on today? - What is blocking
+this project? - Which tasks are overdue? - Which work can wait? - What’s
+the critical path? - What can I finish in the next hour?
+
+Scheduler Vision
+
+Command: project-sentinel task next
+
+Uses: - Dependencies - Priority - Importance - Due Date - Scheduled
+Date - Estimated Time
+
+Calendar
+
+Future views: - Today - Tomorrow - Week - Month
+
+Integrations
+
+-   Google Tasks
+-   TickTick
+-   GitHub
+-   Email
+-   Calendar
+
+AI Agent
+
+Architecture:
+
+User → Project Sentinel Agent → Plugin Layer → Google Tasks / TickTick /
+GitHub / Calendar / Email
+
+Development Philosophy
+
+-   Commit frequently
+-   Keep Ruff passing
+-   Keep MyPy passing
+-   Keep Pytest passing
+
+Current Backend Progress
+
+Implemented: - Workspaces - Projects - Tasks - Task hierarchy -
+Recursive tree - Importance - Priority - Recurring tasks - Dependency
+graph - Ready task engine - Cycle detection - Repository persistence -
+CLI commands - SQLAlchemy repositories - Full type checking - Automated
+test suite
+
+Development Workflow
+
+Implement → Repository → Service → CLI → Tests → Ruff → MyPy → Pytest →
+Commit
+
+Future Roadmap
+
+1.  Scheduler
+2.  Calendar
+3.  Kanban
+4.  Eisenhower Matrix
+5.  Critical Path
+6.  AI Planner
+7.  FastAPI
+8.  React Dashboard
+9.  Plugins
+10. Desktop/Mobile
+
+Suggested Documentation Structure
+
+docs/ - ARCHITECTURE.md - ROADMAP.md - PROJECT_HISTORY.md -
+DESIGN_DECISIONS.md - DOMAIN_MODEL.md - API.md - PLUGINS.md -
+AI_ENGINE.md - CONTRIBUTING.md - CHANGELOG.md

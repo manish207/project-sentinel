@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import builtins
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from enum import StrEnum
 from typing import Protocol
 from uuid import UUID
@@ -28,6 +28,8 @@ class TaskFilters:
     workspace_id: UUID | None = None
     due_today: date | None = None
     overdue_before: date | None = None
+    time_range_start: datetime | None = None
+    time_range_end: datetime | None = None
     completed: bool | None = None
 
 
