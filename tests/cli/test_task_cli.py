@@ -290,12 +290,8 @@ def test_dependency_list_empty(tmp_path: Path):
     assert "No tasks found." in result.output
 
 
-""" def test_ready_command(tmp_path: Path):
-    env = {
-        "SENTINEL_DATABASE_URL": _database_url(
-            tmp_path / "sentinel.db"
-        )
-    }
+def test_ready_command(tmp_path: Path):
+    env = {"SENTINEL_DATABASE_URL": _database_url(tmp_path / "sentinel.db")}
 
     backend = runner.invoke(
         app,
@@ -362,4 +358,3 @@ def test_dependency_list_empty(tmp_path: Path):
 
     assert ready.exit_code == 0
     assert "Frontend" in ready.output
- """

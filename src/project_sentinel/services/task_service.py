@@ -173,6 +173,42 @@ class TaskService:
             )
         return workspace.id
 
+    async def _would_create_cycle(
+        self,
+        task_id: UUID,
+        dependency_id: UUID,
+    ) -> bool:
+        """
+        Returns True if adding
+
+            task_id ---> dependency_id
+
+        would create a dependency cycle.
+        """
+
+        stack = [dependency_id]
+        visited: set[UUID] = set()
+
+        while stack:
+            current = stack.pop()
+
+            if current == task_id:
+                return True
+
+            if current in visited:
+                continue
+
+            visited.add(current)
+
+            task = await self._repository.get(current)
+
+            if task is None:
+                continue
+
+            stack.extend(task.depends_on)
+
+        return False
+
     async def create_subtask(
         self,
         parent_task_id: UUID,
@@ -206,15 +242,17 @@ class TaskService:
         dependency = await self._get_required(dependency_id)
 
         if task.id == dependency.id:
-            raise InvalidTaskValueError("A task cannot depend on itself")
+            raise InvalidTaskValueError("Task cannot depend on itself.")
 
-        if dependency.id in task.depends_on:
-            return
-
-        await self._repository.add_dependency(
+        if await self._would_create_cycle(
             task.id,
             dependency.id,
-        )
+        ):
+            raise InvalidTaskValueError("Dependency cycle detected.")
+
+        if dependency.id not in task.depends_on:
+            task.depends_on.append(dependency.id)
+            await self._repository.save(task)
 
     async def remove_dependency(
         self,

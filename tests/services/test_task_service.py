@@ -472,3 +472,53 @@ def test_ready_tasks_one_dependency_incomplete():
         assert all(task.id != auth.id for task in ready)
 
     asyncio.run(run())
+
+
+def test_dependency_cycle_fails():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        task_a = await service.create_task("A")
+        task_b = await service.create_task("B")
+        task_c = await service.create_task("C")
+
+        await service.add_dependency(
+            task_a.id,
+            task_b.id,
+        )
+
+        await service.add_dependency(
+            task_b.id,
+            task_c.id,
+        )
+
+        with pytest.raises(InvalidTaskValueError):
+            await service.add_dependency(
+                task_c.id,
+                task_a.id,
+            )
+
+    asyncio.run(run())
+
+
+def test_two_task_cycle_fails():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        task_a = await service.create_task("A")
+        task_b = await service.create_task("B")
+
+        await service.add_dependency(
+            task_a.id,
+            task_b.id,
+        )
+
+        with pytest.raises(InvalidTaskValueError):
+            await service.add_dependency(
+                task_b.id,
+                task_a.id,
+            )
+
+    asyncio.run(run())
