@@ -9,6 +9,7 @@ from project_sentinel.cli.calendar import app as calendar_app
 from project_sentinel.cli.board import app as board_app
 from project_sentinel.cli.matrix import app as matrix_app
 from project_sentinel.cli.path import app as path_app
+from project_sentinel.cli.graph import app as graph_app
 
 app = Typer(
     help="Sentinel AI",
@@ -24,3 +25,4 @@ app.add_typer(calendar_app, name="calendar")
 app.add_typer(board_app, name="board")
 app.add_typer(matrix_app, name="matrix")
 app.add_typer(path_app, name="path")
+app.add_typer(graph_app, name="graph")

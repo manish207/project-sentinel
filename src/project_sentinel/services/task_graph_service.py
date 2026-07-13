@@ -123,3 +123,88 @@ class TaskGraphService:
                     best_overall_paths.append(path)
 
         return best_overall_paths
+
+    async def dependency_tree(self, task_id: UUID) -> TaskNode | None:
+        all_tasks = await self._repository.list()
+        task_map = {t.id: t for t in all_tasks}
+
+        def build(curr_id: UUID, visited: set[UUID]) -> TaskNode | None:
+            if curr_id in visited:
+                return None  # Cycle detected
+            task = task_map.get(curr_id)
+            if not task:
+                return None
+
+            new_visited = visited | {curr_id}
+            children_nodes = []
+            for dep_id in task.depends_on:
+                child = build(dep_id, new_visited)
+                if child:
+                    children_nodes.append(child)
+
+            return TaskNode(task=task, children=children_nodes)
+
+        return build(task_id, set())
+
+    async def blocked_by_tree(self, task_id: UUID) -> TaskNode | None:
+        all_tasks = await self._repository.list()
+        task_map = {t.id: t for t in all_tasks}
+
+        # Build reverse index for blockers
+        blocked_by_map: dict[UUID, list[UUID]] = {t.id: [] for t in all_tasks}
+        for t in all_tasks:
+            for dep_id in t.depends_on:
+                if dep_id in blocked_by_map:
+                    blocked_by_map[dep_id].append(t.id)
+
+        def build(curr_id: UUID, visited: set[UUID]) -> TaskNode | None:
+            if curr_id in visited:
+                return None
+            task = task_map.get(curr_id)
+            if not task:
+                return None
+
+            new_visited = visited | {curr_id}
+            children_nodes = []
+            for blocker_id in blocked_by_map.get(curr_id, []):
+                child = build(blocker_id, new_visited)
+                if child:
+                    children_nodes.append(child)
+
+            return TaskNode(task=task, children=children_nodes)
+
+        return build(task_id, set())
+
+    async def workspace_dependency_trees(self) -> list[TaskNode]:
+        all_tasks = await self._repository.list()
+
+        # Find tasks that no other task depends on (roots of dependency trees)
+        depended_upon = set()
+        for t in all_tasks:
+            depended_upon.update(t.depends_on)
+
+        roots = [t.id for t in all_tasks if t.id not in depended_upon and t.depends_on]
+
+        trees = []
+        for root_id in roots:
+            tree = await self.dependency_tree(root_id)
+            if tree:
+                trees.append(tree)
+        return trees
+
+    async def workspace_blocked_by_trees(self) -> list[TaskNode]:
+        all_tasks = await self._repository.list()
+
+        # Find tasks that don't depend on anything, but are depended upon by something
+        depended_upon = set()
+        for t in all_tasks:
+            depended_upon.update(t.depends_on)
+
+        roots = [t.id for t in all_tasks if not t.depends_on and t.id in depended_upon]
+
+        trees = []
+        for root_id in roots:
+            tree = await self.blocked_by_tree(root_id)
+            if tree:
+                trees.append(tree)
+        return trees
