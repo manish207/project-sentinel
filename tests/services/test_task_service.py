@@ -522,3 +522,130 @@ def test_two_task_cycle_fails():
             )
 
     asyncio.run(run())
+
+
+def test_ready_requires_all_dependencies_completed():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        task_a = await service.create_task("Backend")
+        task_b = await service.create_task("Database")
+        task_c = await service.create_task("API")
+
+        await service.add_dependency(task_c.id, task_a.id)
+        await service.add_dependency(task_c.id, task_b.id)
+
+        ready = await service.ready_tasks()
+
+        assert task_c.id not in {task.id for task in ready}
+
+        await service.complete_task(task_a.id)
+
+        ready = await service.ready_tasks()
+
+        assert task_c.id not in {task.id for task in ready}
+
+        await service.complete_task(task_b.id)
+
+        ready = await service.ready_tasks()
+
+        assert task_c.id in {task.id for task in ready}
+
+    asyncio.run(run())
+
+
+def test_remove_one_dependency_keeps_remaining_dependencies():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        a = await service.create_task("A")
+        b = await service.create_task("B")
+        c = await service.create_task("C")
+
+        await service.add_dependency(c.id, a.id)
+        await service.add_dependency(c.id, b.id)
+
+        await service.remove_dependency(c.id, a.id)
+
+        deps = await service.dependencies(c.id)
+
+        ids = {task.id for task in deps}
+
+        assert a.id not in ids
+        assert b.id in ids
+
+    asyncio.run(run())
+
+
+def test_long_cycle_detection():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        a = await service.create_task("A")
+        b = await service.create_task("B")
+        c = await service.create_task("C")
+        d = await service.create_task("D")
+
+        await service.add_dependency(a.id, b.id)
+        await service.add_dependency(b.id, c.id)
+        await service.add_dependency(c.id, d.id)
+
+        with pytest.raises(InvalidTaskValueError):
+            await service.add_dependency(d.id, a.id)
+
+    asyncio.run(run())
+
+
+def test_dependency_persisted():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        a = await service.create_task("Backend")
+        b = await service.create_task("Frontend")
+
+        await service.add_dependency(b.id, a.id)
+
+        deps = await service.dependencies(b.id)
+
+        assert len(deps) == 1
+        assert deps[0].title == "Backend"
+
+    asyncio.run(run())
+
+
+""" def test_ready_requires_all_dependencies_completed():
+    async def run() -> None:
+        repository = FakeTaskRepository()
+        service = TaskService(repository)
+
+        backend = await service.create_task("Backend")
+        database = await service.create_task("Database")
+        api = await service.create_task("API")
+
+        await service.add_dependency(api.id, backend.id)
+        await service.add_dependency(api.id, database.id)
+
+        ready = await service.ready_tasks()
+        ready_ids = {task.id for task in ready}
+
+        assert api.id not in ready_ids
+
+        await service.complete_task(backend.id)
+
+        ready = await service.ready_tasks()
+        ready_ids = {task.id for task in ready}
+
+        assert api.id not in ready_ids
+
+        await service.complete_task(database.id)
+
+        ready = await service.ready_tasks()
+        ready_ids = {task.id for task in ready}
+
+        assert api.id in ready_ids
+
+        asyncio.run(run()) """

@@ -358,3 +358,54 @@ def test_ready_command(tmp_path: Path):
 
     assert ready.exit_code == 0
     assert "Frontend" in ready.output
+
+
+def test_task_cli_next(tmp_path: Path):
+    env = {"SENTINEL_DATABASE_URL": _database_url(tmp_path / "sentinel.db")}
+
+    # Create a low priority task
+    runner.invoke(
+        app,
+        [
+            "task",
+            "create",
+            "Low Priority Task",
+            "--priority",
+            "low",
+            "--importance",
+            "low",
+        ],
+        env=env,
+    )
+
+    # Create a high priority task
+    high_res = runner.invoke(
+        app,
+        [
+            "task",
+            "create",
+            "Critical Task",
+            "--priority",
+            "critical",
+            "--importance",
+            "high",
+        ],
+        env=env,
+    )
+    assert high_res.exit_code == 0
+
+    next_res = runner.invoke(
+        app,
+        [
+            "task",
+            "next",
+        ],
+        env=env,
+    )
+    assert next_res.exit_code == 0
+    assert "Critical Task" in next_res.output
+    assert "Low Priority Task" in next_res.output
+    # Assert Critical Task is listed before Low Priority Task (in terms of position/score)
+    crit_index = next_res.output.index("Critical Task")
+    low_index = next_res.output.index("Low Priority Task")
+    assert crit_index < low_index

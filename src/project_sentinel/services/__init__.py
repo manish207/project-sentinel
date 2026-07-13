@@ -1,4 +1,7 @@
 from .project_service import ProjectNotFoundError, ProjectService
+from .workspace_service import WorkspaceNotFoundError, WorkspaceService
+from .task_graph_service import TaskGraphService, TaskNode
+from .task_scheduler import TaskScheduler, ScheduledTask
 from .task_inputs import TaskCreate, TaskUpdate
 from .task_service import (
     InvalidTaskValueError,
@@ -9,8 +12,6 @@ from .task_service import (
     today,
     parse_importance,
 )
-from .workspace_service import WorkspaceNotFoundError, WorkspaceService
-from .task_graph_service import TaskGraphService, TaskNode
 
 __all__ = [
     "InvalidTaskValueError",
@@ -28,4 +29,6 @@ __all__ = [
     "TaskNode",
     "TaskGraphService",
     "parse_importance",
+    "TaskScheduler",
+    "ScheduledTask",
 ]

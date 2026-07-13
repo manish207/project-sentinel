@@ -29,6 +29,8 @@ from project_sentinel.services import (
     parse_status,
     today,
     parse_importance,
+    TaskScheduler,
+    ScheduledTask,
 )
 
 task_app = typer.Typer(help="Manage tasks", no_args_is_help=True)
@@ -466,3 +468,44 @@ def _parse_date(value: str | None) -> date | None:
     if value is None:
         return None
     return date.fromisoformat(value)
+
+
+@task_app.command(name="next")
+def next_tasks(
+    limit: int = typer.Option(
+        10, "--limit", "-l", help="Limit the number of tasks shown"
+    ),
+) -> None:
+    """Show the next recommended tasks to work on."""
+
+    async def action(service: TaskService) -> list[ScheduledTask]:
+        scheduler = TaskScheduler(service)
+        return await scheduler.next_tasks(limit=limit)
+
+    scheduled = _run_task_action(action)
+
+    if not scheduled:
+        console.print("No recommended tasks found.")
+        return
+
+    table = Table(show_header=True)
+    table.add_column("ID", no_wrap=True, overflow="ignore")
+    table.add_column("Score", style="bold green")
+    table.add_column("Title")
+    table.add_column("Priority")
+    table.add_column("Importance")
+    table.add_column("Due")
+    table.add_column("Reason")
+
+    for item in scheduled:
+        table.add_row(
+            str(item.task.id),
+            f"{item.score:.1f}",
+            item.task.title,
+            item.task.priority.value,
+            item.task.importance.value,
+            item.task.due_date.isoformat() if item.task.due_date else "",
+            item.reason,
+        )
+
+    console.print(table)
